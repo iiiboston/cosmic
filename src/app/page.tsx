@@ -6,11 +6,13 @@ import { useState } from "react";
 export default function Home() {
   const [prompt, setPrompt] = useState("");
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const [generatedImage, setGeneratedImage] = useState<string | null>(null);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
+    setError(null);
     try {
       console.log('Submitting prompt:', prompt);
       
@@ -22,12 +24,12 @@ export default function Home() {
         body: JSON.stringify({ prompt }),
       });
 
+      const data = await response.json();
+      
       if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || `HTTP error! status: ${response.status}`);
+        throw new Error(data.error || `HTTP error! status: ${response.status}`);
       }
 
-      const data = await response.json();
       console.log('Received response:', data);
       
       if (!data.imageUrl || typeof data.imageUrl !== 'string') {
@@ -38,7 +40,7 @@ export default function Home() {
       console.log('Set image URL:', data.imageUrl);
     } catch (error) {
       console.error('Error generating image:', error);
-      alert(error instanceof Error ? error.message : 'Failed to generate image');
+      setError(error instanceof Error ? error.message : 'Failed to generate image');
     } finally {
       setLoading(false);
     }
@@ -63,6 +65,12 @@ export default function Home() {
             {loading ? 'Generating...' : 'Generate Image'}
           </button>
         </form>
+
+        {error && (
+          <div className="text-red-500 text-sm mt-2">
+            Error: {error}
+          </div>
+        )}
 
         {generatedImage && generatedImage.length > 0 && (
           <Image
@@ -96,7 +104,7 @@ export default function Home() {
         <div className="flex gap-4 items-center flex-col sm:flex-row">
           <a
             className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
+            href="https://vercel.com/new"
             target="_blank"
             rel="noopener noreferrer"
           >
